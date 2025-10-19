@@ -132,7 +132,7 @@ If you find this work useful, please consider citing our paper:
 
 ```bibtex
 @article{bai2025ditto,
-  title={Ditto: Scaling Instruction-Based Video Editing with a High-Quality Synthetic Dataset},
+  title={Scaling Instruction-Based Video Editing with a High-Quality Synthetic Dataset},
   author={Bai, Qingyan and Wang, Qiuyu and Ouyang, Hao and Yu, Yue and Wang, Hanlin and Wang, Wen and Cheng, Ka Leong and Ma, Shuailei and Zeng, Yanhong and Liu, Zichen and Xu, Yinghao and Shen, Yujun and Chen, Qifeng},
   journal={arXiv preprint arXiv:2510.XXXXX},
   year={2025}
