@@ -106,14 +106,14 @@ Option 2: Manually install the required custom nodes (you can refer to [this pag
 
 #### *Download Models*
 
-Download the required model weights from: [Kijai/WanVideo_comfy](https://huggingface.co/Kijai/WanVideo_comfy/tree/main) to subfolders of models/. Required files include:
-- [Wan2_1-T2V-14B_fp8_e4m3fn.safetensors](https://huggingface.co/Kijai/WanVideo_comfy/blob/main/Wan2_1-T2V-14B_fp8_e4m3fn.safetensors) to diffusion_models/
-- [Wan21_CausVid_14B_T2V_lora_rank32_v2.safetensors](https://huggingface.co/Kijai/WanVideo_comfy/blob/main/Wan21_CausVid_14B_T2V_lora_rank32_v2.safetensors) to loras/ for inference acceleration
-- [Wan2_1_VAE_bf16.safetensors](https://huggingface.co/Kijai/WanVideo_comfy/blob/main/Wan2_1_VAE_bf16.safetensors) to vae/wan/
-- [umt5-xxl-enc-bf16.safetensors](https://huggingface.co/Kijai/WanVideo_comfy/blob/main/umt5-xxl-enc-bf16.safetensors) to text_encoders/
+Download the required model weights from: [Kijai/WanVideo_comfy](https://huggingface.co/Kijai/WanVideo_comfy/tree/main) to subfolders of `models/`. Required files include:
+- [Wan2_1-T2V-14B_fp8_e4m3fn.safetensors](https://huggingface.co/Kijai/WanVideo_comfy/blob/main/Wan2_1-T2V-14B_fp8_e4m3fn.safetensors) to `diffusion_models/`
+- [Wan21_CausVid_14B_T2V_lora_rank32_v2.safetensors](https://huggingface.co/Kijai/WanVideo_comfy/blob/main/Wan21_CausVid_14B_T2V_lora_rank32_v2.safetensors) to `loras/` for inference acceleration
+- [Wan2_1_VAE_bf16.safetensors](https://huggingface.co/Kijai/WanVideo_comfy/blob/main/Wan2_1_VAE_bf16.safetensors) to `vae/wan/`
+- [umt5-xxl-enc-bf16.safetensors](https://huggingface.co/Kijai/WanVideo_comfy/blob/main/umt5-xxl-enc-bf16.safetensors) to `text_encoders/`
 
 
-Download our models from: [Ditto models_comfy](https://huggingface.co/QingyanBai/Ditto/tree/main/models_comfy) to diffusion_models/ (use VACE Module Select node for loading).
+Download our models from: [Ditto models_comfy](https://huggingface.co/QingyanBai/Ditto/tree/main/models_comfy) to `diffusion_models/` (use VACE Module Select node for loading).
 
 
 #### *Usage*
