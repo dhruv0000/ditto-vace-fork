@@ -142,3 +142,11 @@ If you find this work useful, please consider citing our paper:
 ## Acknowledgments
 
 We thank [Wan](https://github.com/Wan-Video/Wan2.1) & [VACE](https://github.com/ali-vilab/VACE) & [Qwen-Image](https://github.com/QwenLM/Qwen-Image) for providing the powerful foundation model, and [QwenVL](https://github.com/QwenLM/Qwen2.5-VL) for the advanced visual understanding capabilities. We also thank [DiffSynth-Studio](https://github.com/modelscope/DiffSynth-Studio) serving as the codebase for this repository.
+
+## License
+
+This project is licensed under the [Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License](https://creativecommons.org/licenses/by-nc-sa/4.0/).
+
+The code is provided for academic research purposes only.
+
+For any questions, please contact qingyanbai@hotmail.com.
