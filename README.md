@@ -44,7 +44,7 @@ pip install -e .
 
 #### *Download Models*
 
-Download the base model and our models from Hugging Face:
+Download the base model and our models from [Google Drive](https://drive.google.com/drive/folders/1SCsD-r-8QtQUNZSXdz0ALYd_Z_xXyN_6?usp=sharing) or Hugging Face:
 ```bash
 # Download Wan-AI/Wan2.1-VACE-14B from Hugging Face to models/Wan-AI/
 huggingface-cli download Wan-AI/Wan2.1-VACE-14B --local-dir models/Wan-AI/
@@ -110,7 +110,7 @@ Download the required model weights from: [Kijai/WanVideo_comfy](https://hugging
 - [umt5-xxl-enc-bf16.safetensors](https://huggingface.co/Kijai/WanVideo_comfy/blob/main/umt5-xxl-enc-bf16.safetensors) to `text_encoders/`
 
 
-Download our models from: [Ditto models_comfy](https://huggingface.co/QingyanBai/Ditto/tree/main/models_comfy) to `diffusion_models/` (use VACE Module Select node for loading).
+Download our models from [Google Drive](https://drive.google.com/drive/folders/1SCsD-r-8QtQUNZSXdz0ALYd_Z_xXyN_6?usp=sharing) or [Hugging Face](https://huggingface.co/QingyanBai/Ditto/tree/main/models_comfy) to `diffusion_models/` (use VACE Module Select node for loading).
 
 
 #### *Usage*
