@@ -3,13 +3,13 @@
 > **Ditto: Scaling Instruction-Based Video Editing with a High-Quality Synthetic Dataset** <br>
 > Qingyan Bai, Qiuyu Wang, Hao Ouyang, Yue Yu, Hanlin Wang, Wen Wang, Ka Leong Cheng, Shuailei Ma, Yanhong Zeng, Zichen Liu, Yinghao Xu, Yujun Shen, Qifeng Chen
 
-<div align=center>
+<!-- <div align=center>
 <img src="./assets/ditto.gif" width=850px>
 </div>
 
 **Figure:** Instruction-based video editing results produced by our proposed Ditto framework, which enables high-quality video editing through natural language instructions.
 
-<div align=center>
+<div align=center> -->
 
 ## 🔗 **Links & Resources**
 
