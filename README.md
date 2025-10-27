@@ -25,7 +25,7 @@ We introduce Ditto, a holistic framework designed to tackle the fundamental chal
 
 ## Updating List
 - [ ] Release HF online demo.
-- [x] 10/27/2025 - Add [codes](#3-using-denoising-enhancing) for Denoising Enhancing.
+- [x] 10/27/2025 - Add [codes](#denoising-enhancing) for Denoising Enhancing.
 - [x] 10/22/2025 - We have uploaded the [csvs](https://huggingface.co/datasets/QingyanBai/Ditto-1M/tree/main/csvs_for_DiffSynth) that can be directly used for model training with DiffSynth-Studio, as well as the metadata [json](https://huggingface.co/datasets/QingyanBai/Ditto-1M/blob/main/training_metadata/sim2real.json) for sim2real setting.
 - [x] 10/22/2025 - We finish uploading all the videos of the dataset!
 

@@ -20,7 +20,7 @@ torchrun --nproc_per_node=8 --master_port 29522 \
     --ulysses_size=8 \
     --task t2v-A14B \
     --size 720*1280 \
-    --ckpt_dir /robby/share/Editing/hf_weights/Wan-AI/Wan2.2-T2V-A14B \
+    --ckpt_dir /path/to/Wan-AI/Wan2.2-T2V-A14B \
     --offload_model True \
     --convert_model_dtype \
     --t5_cpu  \
