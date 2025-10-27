@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# The prompt could be none or caption
+# The prompt could be none or the caption
 export text_prompt=""
 echo ${text_prompt}
 
@@ -11,7 +11,6 @@ output_dir="./enhanced_videos"
 # Create output directory if it doesn't exist
 mkdir -p "$output_dir"
 
-# Iterate over all video files in example_videos directory
 echo "Processing with $step steps..."
 
 # Enhancing with multiple GPUs.

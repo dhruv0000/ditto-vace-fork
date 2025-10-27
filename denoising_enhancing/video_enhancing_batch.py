@@ -1,4 +1,3 @@
-# Copyright 2024-2025 The Alibaba Wan Team Authors. All rights reserved.
 import argparse
 import logging
 import imageio
@@ -68,20 +67,15 @@ def read_video(
             logging.warning("No frames found in video file")
             return None
 
-        # Stack frames and convert to (T, H, W, C)
         video_tensor = torch.stack(frames, dim=0)
         
-        # Convert to (T, C, H, W) and then to (C, T, H, W)
         video_tensor = video_tensor.permute(0, 3, 1, 2).permute(1, 0, 2, 3)
         
-        # Convert from uint8 to float
         video_tensor = video_tensor.float() / 255.0
 
-        # resize to size
         if size is not None:
             video_tensor = torch.nn.functional.interpolate(video_tensor, size=size)
 
-        # to value range
         if normalize:
             min_val, max_val = value_range
             video_tensor = video_tensor * (max_val - min_val) + min_val
@@ -94,7 +88,6 @@ def read_video(
 
 
 def _validate_args(args):
-    # Basic check
     assert args.ckpt_dir is not None, "Please specify the checkpoint directory."
     assert args.task in WAN_CONFIGS, f"Unsupport task: {args.task}"
     assert args.task in EXAMPLE_PROMPT, f"Unsupport task: {args.task}"
@@ -123,7 +116,6 @@ def _validate_args(args):
 
     args.base_seed = args.base_seed if args.base_seed >= 0 else random.randint(
         0, sys.maxsize)
-    # Size check
     assert args.size in SUPPORTED_SIZES[
         args.
         task], f"Unsupport size {args.size} for task {args.task}, supported sizes are: {', '.join(SUPPORTED_SIZES[args.task])}"
@@ -278,9 +270,7 @@ def _parse_args():
 
 
 def _init_logging(rank):
-    # logging
     if rank == 0:
-        # set format
         logging.basicConfig(
             level=logging.INFO,
             format="[%(asctime)s] %(levelname)s: %(message)s",
@@ -365,7 +355,6 @@ def generate(args):
         img = Image.open(args.image).convert("RGB")
         logging.info(f"Input image: {args.image}")
 
-    # prompt extend
     if args.use_prompt_extend:
         logging.info("Extending prompt ...")
         if rank == 0:
@@ -426,7 +415,7 @@ def generate(args):
                 forward_step=args.forward_step,
                 skip_backward_step=args.skip_backward_step,
                 do_recon=args.do_recon,
-                save_file=save_file.replace(".mp4", "_t2v_recon.mp4")
+                save_file=save_file.replace(".mp4", "_recon.mp4")
             )
             end_time = time.time()
             elapse_time = end_time - start_time
