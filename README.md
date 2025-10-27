@@ -3,14 +3,6 @@
 > **Ditto: Scaling Instruction-Based Video Editing with a High-Quality Synthetic Dataset** <br>
 > Qingyan Bai, Qiuyu Wang, Hao Ouyang, Yue Yu, Hanlin Wang, Wen Wang, Ka Leong Cheng, Shuailei Ma, Yanhong Zeng, Zichen Liu, Yinghao Xu, Yujun Shen, Qifeng Chen
 
-<!-- <div align=center>
-<img src="./assets/ditto.gif" width=850px>
-</div>
-
-**Figure:** Instruction-based video editing results produced by our proposed Ditto framework, which enables high-quality video editing through natural language instructions.
-
-<div align=center> -->
-
 ## 🔗 **Links & Resources**
 
 **[**[**📄 Paper**](https://arxiv.org/abs/2510.15742)**]**
@@ -32,7 +24,7 @@ To solve the data scarcity problem, we introduce a scalable pipeline Ditto, for 
 We introduce Ditto, a holistic framework designed to tackle the fundamental challenge of instruction-based video editing. At its heart, Ditto features a novel data generation pipeline that fuses the creative diversity of a leading image editor with an in-context video generator, overcoming the limited scope of existing models. To make this process viable, our framework resolves the prohibitive cost-quality trade-off by employing an efficient, distilled model architecture augmented by a temporal enhancer, which simultaneously reduces computational overhead and improves temporal coherence. Finally, to achieve full scalability, this entire pipeline is driven by an intelligent agent that crafts diverse instructions and rigorously filters the output, ensuring quality control at scale. Using this framework, we invested over 12,000 GPU-days to build Ditto-1M, a new dataset of one million high-fidelity video editing examples. We trained our model, Editto, on Ditto-1M with a curriculum learning strategy. The results demonstrate superior instruction-following ability and establish a new SOTA in instruction-based video editing.
 
 ## Updating List
-- [ ] Add codes for Denoising Enhancing.
+- [x] 10/27/2025 - Add [codes](#3-using-denoising-enhancing) for Denoising Enhancing.
 - [x] 10/22/2025 - We have uploaded the [csvs](https://huggingface.co/datasets/QingyanBai/Ditto-1M/tree/main/csvs_for_DiffSynth) that can be directly used for model training with DiffSynth-Studio, as well as the metadata [json](https://huggingface.co/datasets/QingyanBai/Ditto-1M/blob/main/training_metadata/sim2real.json) for sim2real setting.
 - [x] 10/22/2025 - We finish uploading all the videos of the dataset!
 
@@ -105,7 +97,6 @@ Option 2: Manually install the required custom nodes (you can refer to [this pag
 <sub>
 - [ComfyUI-WanVideoWrapper](https://github.com/kijai/ComfyUI-WanVideoWrapper)
 - [KJNodes for ComfyUI](https://github.com/kijai/ComfyUI-KJNodes)
-- [comfyui-mixlab-nodes](https://github.com/MixLabPro/comfyui-mixlab-nodes)
 - [ComfyUI-VideoHelperSuite](https://github.com/Kosinkadink/ComfyUI-VideoHelperSuite)
 </sub>
 
@@ -146,6 +137,21 @@ bash train.sh
 ### Multi-Node Training
 
 Thanks to DiffSynth-Studio, this codebase supports multi-node training. You can consider using [DLRover](https://github.com/intelligent-machine-learning/dlrover) to support training across multiple machines.
+
+### 3. Using denoising enhancing
+
+To use the denoising enhancing functionality, first install requirements for [Wan2.2](https://github.com/Wan-Video/Wan2.2):
+
+```bash
+cd denoising_enhancing
+pip install -e .
+```
+
+Download the [Wan-AI/Wan2.2-T2V-A14B](https://huggingface.co/Wan-AI/Wan2.2-T2V-A14B) model, then save the paths of videos to be processed into a txt file. Run the script:
+
+```bash
+bash run_video_enhancing.sh
+```
 
 ## Citation
 
