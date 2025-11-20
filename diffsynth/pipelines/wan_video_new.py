@@ -19,7 +19,7 @@ from ..models.wan_video_dit_s2v import rope_precompute
 from ..models.wan_video_text_encoder import WanTextEncoder, T5RelativeEmbedding, T5LayerNorm
 from ..models.wan_video_vae import WanVideoVAE, RMS_norm, CausalConv3d, Upsample
 from ..models.wan_video_image_encoder import WanImageEncoder
-from ..models.wan_video_vace import VaceWanModel
+from ..models.wan_video_vace import VaceWanModel, NoiseAwareContextGating, VaceNoiseTokenizer
 from ..models.wan_video_motion_controller import WanMotionControllerModel
 from ..models.wan_video_animate_adapter import WanAnimateAdapter
 from ..schedulers.flow_match import FlowMatchScheduler
@@ -47,8 +47,11 @@ class WanVideoPipeline(BasePipeline):
         self.vace: VaceWanModel = None
         self.vace2: VaceWanModel = None
         self.animate_adapter: WanAnimateAdapter = None
-        self.in_iteration_models = ("dit", "motion_controller", "vace", "animate_adapter")
-        self.in_iteration_models_2 = ("dit2", "motion_controller", "vace2", "animate_adapter")
+        self.context_gating: NoiseAwareContextGating = None
+        self.vace_noise_tokenizer: VaceNoiseTokenizer = None
+        self.experiments = set()
+        self.in_iteration_models = ("dit", "motion_controller", "vace", "animate_adapter", "context_gating", "vace_noise_tokenizer")
+        self.in_iteration_models_2 = ("dit2", "motion_controller", "vace2", "animate_adapter", "context_gating", "vace_noise_tokenizer")
         self.unit_runner = PipelineUnitRunner()
         self.units = [
             WanVideoUnit_ShapeChecker(),
@@ -104,7 +107,40 @@ class WanVideoPipeline(BasePipeline):
         else:
             loader = GeneralLoRALoader(torch_dtype=self.torch_dtype, device=self.device)
             loader.load(module, lora, alpha=alpha)
-        
+
+    def apply_experiments(self, experiments=None):
+        """
+        Configure optional research features from a list / comma separated string.
+        Supported tokens:
+            - novelty1 / context_gate / gate_channel / gate_scalar
+            - novelty2 / noise_token / vace_noise_token
+        """
+        if experiments is None:
+            experiments = []
+        if isinstance(experiments, str):
+            experiments = experiments.split(",")
+        exp_set = set(filter(None, [exp.strip().lower() for exp in experiments]))
+        self.experiments = exp_set
+
+        # Novelty 1: gating strength per VACE injection point
+        gate_requested = any(
+            token in exp_set for token in ["novelty1", "context_gate", "context_gating", "gate_scalar", "gate_channel", "gating"]
+        )
+        gate_type = "channel" if "gate_channel" in exp_set or "channel_gate" in exp_set else "scalar"
+        if gate_requested and self.vace is not None and self.dit is not None and len(self.vace.vace_layers) > 0:
+            self.context_gating = NoiseAwareContextGating(self.dit.dim, len(self.vace.vace_layers), gate_type=gate_type)
+        else:
+            self.context_gating = None
+
+        # Novelty 2: add pooled VACE noise token into cross attention
+        noise_token_requested = any(
+            token in exp_set for token in ["novelty2", "noise_token", "vace_noise_token", "noise_tokenizer"]
+        )
+        if noise_token_requested and self.vace is not None and self.dit is not None:
+            self.vace_noise_tokenizer = VaceNoiseTokenizer(self.vace.vace_in_dim, self.dit.dim)
+        else:
+            self.vace_noise_tokenizer = None
+            
     def training_loss(self, **inputs):
         max_timestep_boundary = int(inputs.get("max_timestep_boundary", 1) * self.scheduler.num_train_timesteps)
         min_timestep_boundary = int(inputs.get("min_timestep_boundary", 0) * self.scheduler.num_train_timesteps)
@@ -1262,6 +1298,8 @@ def model_fn_wan_video(
     motion_controller: WanMotionControllerModel = None,
     vace: VaceWanModel = None,
     animate_adapter: WanAnimateAdapter = None,
+    context_gating: NoiseAwareContextGating = None,
+    vace_noise_tokenizer: VaceNoiseTokenizer = None,
     latents: torch.Tensor = None,
     timestep: torch.Tensor = None,
     context: torch.Tensor = None,
@@ -1293,6 +1331,8 @@ def model_fn_wan_video(
             dit=dit,
             motion_controller=motion_controller,
             vace=vace,
+            context_gating=context_gating,
+            vace_noise_tokenizer=vace_noise_tokenizer,
             latents=latents,
             timestep=timestep,
             context=context,
@@ -1336,6 +1376,15 @@ def model_fn_wan_video(
                                             get_sp_group)
 
     # Timestep
+    def _pool_time_embed(tensor):
+        if tensor.dim() == 2:
+            return tensor
+        if tensor.dim() == 3:
+            return tensor.mean(dim=1)
+        if tensor.dim() == 4:
+            return tensor.mean(dim=(1, 2))
+        return tensor.reshape(tensor.shape[0], -1)
+
     if dit.seperated_timestep and fuse_vae_embedding_in_latents:
         timestep = torch.concat([
             torch.zeros((1, latents.shape[3] * latents.shape[4] // 4), dtype=latents.dtype, device=latents.device),
@@ -1350,6 +1399,7 @@ def model_fn_wan_video(
     else:
         t = dit.time_embedding(sinusoidal_embedding_1d(dit.freq_dim, timestep))
         t_mod = dit.time_projection(t).unflatten(1, (6, dit.dim))
+    t_for_gate = _pool_time_embed(t)
     
     # Motion Controller
     if motion_bucket_id is not None and motion_controller is not None:
@@ -1362,6 +1412,8 @@ def model_fn_wan_video(
         x = torch.concat([x] * context.shape[0], dim=0)
     if timestep.shape[0] != context.shape[0]:
         timestep = torch.concat([timestep] * context.shape[0], dim=0)
+    if t_for_gate.shape[0] != context.shape[0]:
+        t_for_gate = t_for_gate.expand(context.shape[0], -1)
 
     # Image Embedding
     if y is not None and dit.require_vae_embedding:
@@ -1369,6 +1421,17 @@ def model_fn_wan_video(
     if clip_feature is not None and dit.require_clip_embedding:
         clip_embdding = dit.img_emb(clip_feature)
         context = torch.cat([clip_embdding, context], dim=1)
+    text_summary = context.mean(dim=1) if context is not None else None
+    
+    gate_values = None
+    if context_gating is not None and vace_context is not None and text_summary is not None:
+        gate_values = context_gating(t_for_gate, text_summary)
+    
+    if vace_noise_tokenizer is not None and vace_context is not None:
+        noise_token = vace_noise_tokenizer(vace_context)
+        if noise_token is not None:
+            noise_token = noise_token.to(dtype=context.dtype, device=context.device)
+            context = torch.cat([context, noise_token], dim=1)
     
     # Camera control
     x = dit.patchify(x, control_camera_latents_input)
@@ -1401,7 +1464,7 @@ def model_fn_wan_video(
     else:
         tea_cache_update = False
         
-    if vace_context is not None:
+    if vace_context is not None and vace is not None:
         vace_hints = vace(
             x, vace_context, context, t_mod, freqs,
             use_gradient_checkpointing=use_gradient_checkpointing,
@@ -1442,11 +1505,15 @@ def model_fn_wan_video(
                 x = block(x, context, t_mod, freqs)
             
             # VACE
-            if vace_context is not None and block_id in vace.vace_layers_mapping:
+            if vace_context is not None and vace is not None and block_id in vace.vace_layers_mapping:
                 current_vace_hint = vace_hints[vace.vace_layers_mapping[block_id]]
                 if use_unified_sequence_parallel and dist.is_initialized() and dist.get_world_size() > 1:
                     current_vace_hint = torch.chunk(current_vace_hint, get_sequence_parallel_world_size(), dim=1)[get_sequence_parallel_rank()]
                     current_vace_hint = torch.nn.functional.pad(current_vace_hint, (0, 0, 0, chunks[0].shape[1] - current_vace_hint.shape[1]), value=0)
+                if gate_values is not None:
+                    gate = gate_values[vace.vace_layers_mapping[block_id]]
+                    gate = gate.to(dtype=current_vace_hint.dtype, device=current_vace_hint.device)
+                    current_vace_hint = current_vace_hint * gate
                 x = x + current_vace_hint * vace_scale
             
             # Animate

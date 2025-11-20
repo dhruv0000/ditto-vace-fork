@@ -16,6 +16,7 @@ class WanTrainingModule(DiffusionTrainingModule):
         use_gradient_checkpointing=True,
         use_gradient_checkpointing_offload=False,
         extra_inputs=None,
+        experiments=None,
         max_timestep_boundary=1.0,
         min_timestep_boundary=0.0,
     ):
@@ -23,8 +24,11 @@ class WanTrainingModule(DiffusionTrainingModule):
         # Load models
         model_configs = self.parse_model_configs(model_paths, model_id_with_origin_paths, enable_fp8_training=False)
         self.pipe = WanVideoPipeline.from_pretrained(torch_dtype=torch.bfloat16, device="cpu", model_configs=model_configs)
+        self.experiments = experiments
+        self.pipe.apply_experiments(experiments)
         
         # Training mode
+        trainable_models = self._merge_experiment_trainables(trainable_models)
         self.switch_pipe_to_training_mode(
             self.pipe, trainable_models,
             lora_base_model, lora_target_modules, lora_rank, lora_checkpoint=lora_checkpoint,
@@ -37,6 +41,18 @@ class WanTrainingModule(DiffusionTrainingModule):
         self.extra_inputs = extra_inputs.split(",") if extra_inputs is not None else []
         self.max_timestep_boundary = max_timestep_boundary
         self.min_timestep_boundary = min_timestep_boundary
+        
+        
+    def _merge_experiment_trainables(self, trainable_models):
+        names = [] if trainable_models is None else [name for name in trainable_models.split(",") if name]
+        if self.pipe.context_gating is not None:
+            names.append("context_gating")
+        if self.pipe.vace_noise_tokenizer is not None:
+            names.append("vace_noise_tokenizer")
+        if len(names) == 0:
+            return trainable_models
+        names = list(dict.fromkeys(names))
+        return ",".join(names)
         
         
     def forward_preprocess(self, data):
@@ -122,6 +138,7 @@ if __name__ == "__main__":
         lora_checkpoint=args.lora_checkpoint,
         use_gradient_checkpointing_offload=args.use_gradient_checkpointing_offload,
         extra_inputs=args.extra_inputs,
+        experiments=args.experiments,
         max_timestep_boundary=args.max_timestep_boundary,
         min_timestep_boundary=args.min_timestep_boundary,
     )

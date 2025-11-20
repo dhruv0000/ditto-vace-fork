@@ -1,4 +1,5 @@
 import torch
+import torch.nn as nn
 from .wan_video_dit import DiTBlock
 from .utils import hash_state_dict_keys
 
@@ -111,3 +112,58 @@ class VaceWanModelDictConverter:
         else:
             config = {}
         return state_dict_, config
+
+
+class NoiseAwareContextGating(nn.Module):
+    """
+    Tiny gating heads that learn how strongly to inject VACE hints conditioned on
+    the current diffusion timestep and pooled text embedding.
+    """
+    def __init__(self, dim, num_layers, gate_type="scalar", hidden_mult=2):
+        super().__init__()
+        out_dim = 1 if gate_type == "scalar" else dim
+        hidden_dim = dim * hidden_mult
+        self.gate_type = gate_type
+        self.gates = nn.ModuleList([
+            nn.Sequential(
+                nn.LayerNorm(dim * 2),
+                nn.Linear(dim * 2, hidden_dim),
+                nn.SiLU(),
+                nn.Linear(hidden_dim, out_dim),
+            ) for _ in range(num_layers)
+        ])
+
+    def forward(self, timestep_embed, text_embed):
+        cond = torch.cat([timestep_embed, text_embed], dim=-1)
+        gates = []
+        for proj in self.gates:
+            gate = torch.sigmoid(proj(cond))
+            if self.gate_type == "scalar":
+                gate = gate.view(gate.shape[0], 1, 1)
+            else:
+                gate = gate.view(gate.shape[0], 1, -1)
+            gates.append(gate)
+        return gates
+
+
+class VaceNoiseTokenizer(nn.Module):
+    """
+    Projects pooled VACE latents into a single token that can be appended to text
+    for cross attention.
+    """
+    def __init__(self, in_dim, out_dim, hidden_mult=2):
+        super().__init__()
+        hidden_dim = max(in_dim, out_dim) * hidden_mult
+        self.proj = nn.Sequential(
+            nn.LayerNorm(in_dim),
+            nn.Linear(in_dim, hidden_dim),
+            nn.SiLU(),
+            nn.Linear(hidden_dim, out_dim),
+        )
+
+    def forward(self, vace_context):
+        if vace_context is None:
+            return None
+        pooled = vace_context.mean(dim=(2, 3, 4))
+        token = self.proj(pooled)
+        return token.unsqueeze(1)
