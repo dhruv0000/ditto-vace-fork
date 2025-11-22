@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # Default values
-DATASET_BASE_PATH="/path/to/Ditto-1M/videos"
-DATASET_METADATA_PATH="/path/to/csvs_for_DiffSynth/xxx.csv"
+DATASET_BASE_PATH="./Ditto-1M/videos"
+DATASET_METADATA_PATH="./Ditto-1M/csvs_for_DiffSynth/metadata.csv"
 OUTPUT_PATH="./exps/ditto"
 MODEL_ID="Wan-AI/Wan2.1-VACE-1.3B"
 NUM_EPOCHS=5
